@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  php:
+    build:
+      context: ./php-fpm
+    labels:
+      - "de.fh-bielefeld.description=PHP fpm container"
+      - "de.fh-bielefeld.department=Datenverarbeitungszentrale"
+      - "de.fh-bielefeld.maintainer=daniel.kappe@fh-bielefeld.de"
+    logging:
+      driver: "journald"
+      options:
+        tag: "{{.ImageName}}/{{.Name}}/{{.ID}}"
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: ./html
+        target: /var/www/html
+    ports:
+      - target: 9000
+        published: 9000
+        protocol: tcp
+        mode: host
+
+  apache:
+    build:
+      context: ./apache
+    labels:
+      - "de.fh-bielefeld.description=Apache Container to serve a PHP fpm"
+      - "de.fh-bielefeld.department=Datenverarbeitungszentrale"
+      - "de.fh-bielefeld.maintainer=daniel.kappe@fh-bielefeld.de"
+    logging:
+      driver: "journald"
+      options:
+        tag: "{{.ImageName}}/{{.Name}}/{{.ID}}"
+    restart: unless-stopped
+    depends_on:
+      - php
+    ports:
+      - target: 80
+        published: 8080
+        protocol: tcp
+        mode: host
+    volumes:
+      - type: bind
+        source: ./html
+        target: /usr/local/apache2/htdocs
